@@ -20,6 +20,10 @@ Metadata:
       - FAHUserName
       - FAHPassKey
       - FAHTeam
+      - FAHPower
+      - FAHCause
+      - FAHGPU
+      - FAHSMP
       - TargetCapacity
       - ComputeInstanceType
       - GPUInstanceType
@@ -73,6 +77,22 @@ Parameters:
   FAHTeam:
     Default: 11812   # RedHat
     Description: FAH Team Number
+    Type: String
+  FAHPower:
+    Default: 'full'
+    Description: 'Power level of Folding At Home Client on host'
+    Type: String
+  FAHCause:
+    Default: 'ANY'
+    Description: 'Cause to support'
+    Type: String
+  FAHGPU:
+    Default: 'false'
+    Description: 'Enable GPU Support'
+    Type: String
+  FAHSMP:
+    Default: 'true'
+    Description: 'Enable SMP Support'
     Type: String
   TargetCapacity:
     Default: 1
@@ -181,6 +201,10 @@ Resources:
             sed -i "s/^username.*/username=${FAHUserName}/" inventory
             sed -i "s/^passkey.*/passkey=${FAHPassKey}/" inventory
             sed -i "s/^team.*/team=${FAHTeam}/" inventory
+            sed -i "s/^power.*/power=${FAHPower}/" inventory
+            sed -i "s/^gpu.*/gpu=${FAHGPU}/" inventory
+            sed -i "s/^smp.*/smp=${FAHSMP}/" inventory
+            sed -i "s/^cause.*/cause=${FAHCause}/" inventory
             # Install FAH
             ansible-playbook -i inventory main.yml
 
