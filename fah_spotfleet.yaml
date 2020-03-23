@@ -10,7 +10,7 @@ Metadata:
       - AMI
       - Region
       - AZ
-#      - CidrBlock
+      - CidrBlock
       - VPC
       - SubnetA
 #      - RouteTablePublic
@@ -38,6 +38,10 @@ Parameters:
     Default: 'us-east-2a'
     Description: 'AZ'
     Type: 'AWS::EC2::AvailabilityZone::Name'
+  CidrBlock:
+    Default: '0.0.0.0'    # Defaults to World
+    Description: 'Default Cidr Block for Folding At Home Security Group'
+    Type: String
   VPC:
     Description: 'VPC'
     Type: 'AWS::EC2::VPC::Id'
@@ -132,7 +136,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: 22
         ToPort: 22
-        CidrIp: ''
+        CidrIp: !Ref CidrBlock
       VpcId: !Ref VPC
 
   FoldingAtHomeLaunchTemplate:    # The Launch Template that will be used to deploy the test environment
