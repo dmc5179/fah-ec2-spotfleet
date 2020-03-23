@@ -39,7 +39,7 @@ Parameters:
     Description: 'AZ'
     Type: 'AWS::EC2::AvailabilityZone::Name'
   CidrBlock:
-    Default: '0.0.0.0'    # Defaults to World
+    Default: '0.0.0.0/0'    # Defaults to World
     Description: 'Default Cidr Block for Folding At Home Security Group'
     Type: String
   VPC:
