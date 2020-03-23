@@ -23,6 +23,7 @@ Metadata:
       - TargetCapacity
       - ComputeInstanceType
       - GPUInstanceType
+      - FAHGitRepo
 
 Parameters:
   AMI:
@@ -80,6 +81,10 @@ Parameters:
   GPUInstanceType:
     Default: p3.2xlarge
     Description: Instance type of the GPU EC2 Instances
+    Type: String
+  FAHGitRepo:
+    Default: 'https://github.com/ajacocks/fah.git'
+    Description: Git repository for installing the Folding At Home Client
     Type: String
 
 Resources:
@@ -162,12 +167,16 @@ Resources:
             dnf -y install wget vim python3 python3-pip git ansible
 
             # Get Ansible Playbooks for installing fah
-            git clone https://github.com/ajacocks/fah.git
+            git clone "${FAHGitRepo}"
             pushd fah
             # Set localhost as the only server to install on
-            sed '/\[servers\]/a localhost ansible_connection=local' inventory
+            sed -i '/\[servers\]/a localhost ansible_connection=local' inventory
             # TODO: Add code to insert custom variables from the Cloudforms into the inventory
-
+            sed -i "s/^chost.*/chost=${FAHControlHost}/" inventory
+            sed -i "s/^cpass.*/cpass=${FAHControlPass}/" inventory
+            sed -i "s/^username.*/username=${FAHUserName}/" inventory
+            sed -i "s/^passkey.*/passkey=${FAHPassKey}/" inventory
+            sed -i "s/^team.*/team=${FAHTeam}/" inventory
             # Install FAH
             ansible-playbook -i inventory main.yml
 
