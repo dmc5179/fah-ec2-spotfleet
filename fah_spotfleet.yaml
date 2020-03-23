@@ -173,7 +173,7 @@ Resources:
             sed -i '/\[servers\]/a localhost ansible_connection=local' inventory
             # TODO: Add code to insert custom variables from the Cloudforms into the inventory
             sed -i "s/^chost.*/chost=${FAHControlHost}/" inventory
-            sed -i "s/^cpass.*/cpass=${FAHControlPass}/" inventory
+            sed -i "s/^cpass.*/cpass=${FAHControlPassword}/" inventory
             sed -i "s/^username.*/username=${FAHUserName}/" inventory
             sed -i "s/^passkey.*/passkey=${FAHPassKey}/" inventory
             sed -i "s/^team.*/team=${FAHTeam}/" inventory
