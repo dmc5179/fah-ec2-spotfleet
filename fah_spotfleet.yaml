@@ -1,0 +1,192 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Create a sport fleet for the Folding @Home project'
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: 'VPC Parameters'
+      Parameters:
+      - AMI
+      - Region
+      - AZ
+      - CidrBlock
+      - VPC
+      - SubnetA
+      - RouteTablePublic
+      - KeyPair
+      - FAHControlHost
+      - FAHControlPassword
+      - FAHUserName
+      - FAHPassKey
+      - FAHTeam
+      - TargetCapacity
+      - ComputeInstanceType
+      - GPUInstanceType
+
+Parameters:
+  AMI:
+    Default: ami-0d31ffafc92cb1a4a
+    Description: 'AMI for the spot fleet instances'
+    Type: 'AWS::EC2::Image::Id'
+  Region:
+    Default: 'us-east-2'
+    Description: 'Region'
+    Type: String
+  AZ:
+    Default: 'us-east-2a'
+    Description: 'AZ'
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+  VPC:
+    Default:
+    Description: 'VPC'
+    Type: 'AWS::EC2::VPC::Id'
+  SubnetA:
+    Default:
+    Description: 'Subnet public.'
+    Type: 'AWS::EC2::Subnet::Id'
+  RouteTablePublic:
+    Default:
+    Description: 'Route table public.'
+    Type: String
+  KeyPair:
+    Description: 'Key Pair'
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  FAHControlHost:
+    Default: '0/0' # All
+    Description: IP Address of the host which can connect to the control panel
+    Type: String 
+  FAHControlPassword: #Random
+    Default: 'CJoj0q1Opr6aSSUYAKWecQg'
+    Description: Password for the FAH Control Panel
+    Type: String
+  FAHUserName:
+    Default: 'Anonymous'
+    Description: FAH User Name
+    Type: String
+  FAHPassKey:
+    Default: ''
+    Description: FAH User PassKey
+    Type: String
+  FAHTeam:
+    Default: 0
+    Description: FAH Team Number
+    Type: String
+  TargetCapacity:
+    Default: 1
+    Descritption: Target Capacity
+    Type: String
+  ComputeInstanceType:
+    Default: c4.large
+    Description: Instance type of the Compute EC2 Instances
+    Type: String
+  GPUInstanceType:
+    Default: p3.2xlarge
+    Description: Instance type of the GPU EC2 Instances
+    Type: String
+
+Resources:
+
+  IAMRoleFoldingAtHome:
+    Type: AWS::IAM::Role
+    # DependsOn: None
+    # DependedOn: InstanceProfileFoldingAtHome
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: Test
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${DeploymentArtifactsS3Bucket}/*"
+
+  InstanceProfileFoldingAtHome:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn: IAMRoleFoldingAtHome
+    # DependedOn: FoldingAtHomeLaunchTemplate
+    Properties:
+      Path: '/'
+      Roles:
+      - !Ref IAMRoleFoldingAtHome
+
+  SecurityGroupFoldingAtHomeEC2: # A Security Group that allows ingress access for SSH and the default port that the Folding At Home control panel will run on
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: None
+    Properties:
+      GroupName: Spot Folding At Home EC2 Security Group
+      GroupDescription: A Security Group that allows ingress access for SSH and the default port that a Folding At Home client will run
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref CurrentIP
+      VpcId: !Ref VPC
+
+ FoldingAtHomeLaunchTemplate: # The Launch Template that will be used to deploy the test environment
+    Type: AWS::EC2::LaunchTemplate
+    DependsOn: SecurityGroupFoldingAtHomeEC2
+    # DependedOn: None
+    Properties:
+      LaunchTemplateName: FoldingAtHomeLaunchTemplate
+      LaunchTemplateData:
+        BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            DeleteOnTermination: 'true'
+            VolumeSize: 15
+            VolumeType: gp2
+        IamInstanceProfile:
+          Name: !Ref InstanceProfileFoldingAtHome
+        ImageId: !Ref AMI
+        InstanceType: !Ref GPUInstanceType
+        KeyName: !Ref KeyPair
+        SecurityGroupIds:
+        - !Ref SecurityGroupFoldingAtHomeEC2
+        TagSpecifications:
+        - ResourceType: instance
+          Tags:
+          - Key: Name
+            Value: Game of Life Test Instance
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            # Install required packages
+            dnf -y install wget vim python3 python3-pip git ansible
+
+            # Get Ansible Playbooks for installing fah
+            git clone https://github.com/ajacocks/fah.git
+            pushd fah
+            # Set localhost as the only server to install on
+            sed '/\[servers\]/a localhost ansible_connection=local' inventory
+            # TODO: Add code to insert custom variables from the Cloudforms into the inventory
+
+            # Install FAH
+            ansible-playbook -i inventory main.yml
+
+
+  FoldingAtHomeSpotFleet: # The Spot Fleet definition that will launch the EC2 instances
+    Type: AWS::EC2::SpotFleet
+    DependsOn: FoldingAtHomeLaunchTemplate
+    Properties:
+      SpotFleetRequestConfigData:
+        AllocationStrategy: lowestPrice
+        IamFleetRole: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-ec2-spot-fleet-tagging-role
+        LaunchTemplateConfigs:
+        - LaunchTemplateSpecification: 
+            LaunchTemplateName: FoldingAtHomeLaunchTemplate
+            Version: !GetAtt FoldingAtHomeLaunchTemplate.LatestVersionNumber
+          Overrides:
+          - SubnetId: !Ref SubnetA
+        ReplaceUnhealthyInstances: true
+        TargetCapacity: !Ref TargetCapacity
+        Type: maintain
