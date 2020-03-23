@@ -10,10 +10,10 @@ Metadata:
       - AMI
       - Region
       - AZ
-      - CidrBlock
+#      - CidrBlock
       - VPC
       - SubnetA
-      - RouteTablePublic
+#      - RouteTablePublic
       - KeyPair
       - FAHControlHost
       - FAHControlPassword
@@ -38,17 +38,14 @@ Parameters:
     Description: 'AZ'
     Type: 'AWS::EC2::AvailabilityZone::Name'
   VPC:
-    Default:
     Description: 'VPC'
     Type: 'AWS::EC2::VPC::Id'
   SubnetA:
-    Default:
     Description: 'Subnet public.'
     Type: 'AWS::EC2::Subnet::Id'
-  RouteTablePublic:
-    Default:
-    Description: 'Route table public.'
-    Type: String
+#  RouteTablePublic:
+#    Description: 'Route table public.'
+#    Type: String
   KeyPair:
     Description: 'Key Pair'
     Type: 'AWS::EC2::KeyPair::KeyName'
@@ -74,7 +71,7 @@ Parameters:
     Type: String
   TargetCapacity:
     Default: 1
-    Descritption: Target Capacity
+    Description: Target Capacity
     Type: String
   ComputeInstanceType:
     Default: c4.large
@@ -102,14 +99,14 @@ Resources:
           Action:
           - sts:AssumeRole
       Path: /
-      Policies:
-      - PolicyName: Test
-        PolicyDocument:
-          Version: 2012-10-17
-          Statement:
-          - Effect: Allow
-            Action: s3:GetObject
-            Resource: !Sub "arn:aws:s3:::${DeploymentArtifactsS3Bucket}/*"
+#      Policies:
+#      - PolicyName: Test
+#        PolicyDocument:
+#          Version: 2012-10-17
+#          Statement:
+#          - Effect: Allow
+#            Action: s3:GetObject
+#            Resource: !Sub "arn:aws:s3:::${DeploymentArtifactsS3Bucket}/*"
 
   InstanceProfileFoldingAtHome:
     Type: AWS::IAM::InstanceProfile
@@ -122,7 +119,7 @@ Resources:
 
   SecurityGroupFoldingAtHomeEC2:    # A Security Group that allows ingress access for SSH and the default port that the Folding At Home control panel will run on
     Type: AWS::EC2::SecurityGroup
-    DependsOn: None
+    #DependsOn: None
     Properties:
       GroupName: Spot Folding At Home EC2 Security Group
       GroupDescription: A Security Group that allows ingress access for SSH and the default port that a Folding At Home client will run
@@ -130,7 +127,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: 22
         ToPort: 22
-        CidrIp: !Ref CurrentIP
+        CidrIp: ''
       VpcId: !Ref VPC
 
   FoldingAtHomeLaunchTemplate:    # The Launch Template that will be used to deploy the test environment
