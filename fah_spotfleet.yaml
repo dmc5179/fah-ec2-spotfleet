@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Create a sport fleet for the Folding @Home project'
 Metadata:
@@ -52,10 +53,10 @@ Parameters:
     Description: 'Key Pair'
     Type: 'AWS::EC2::KeyPair::KeyName'
   FAHControlHost:
-    Default: '0/0' # All
+    Default: '0/0'     # All
     Description: IP Address of the host which can connect to the control panel
-    Type: String 
-  FAHControlPassword: #Random
+    Type: String
+  FAHControlPassword:   # Random
     Default: 'CJoj0q1Opr6aSSUYAKWecQg'
     Description: Password for the FAH Control Panel
     Type: String
@@ -119,7 +120,7 @@ Resources:
       Roles:
       - !Ref IAMRoleFoldingAtHome
 
-  SecurityGroupFoldingAtHomeEC2: # A Security Group that allows ingress access for SSH and the default port that the Folding At Home control panel will run on
+  SecurityGroupFoldingAtHomeEC2:    # A Security Group that allows ingress access for SSH and the default port that the Folding At Home control panel will run on
     Type: AWS::EC2::SecurityGroup
     DependsOn: None
     Properties:
@@ -132,7 +133,7 @@ Resources:
         CidrIp: !Ref CurrentIP
       VpcId: !Ref VPC
 
- FoldingAtHomeLaunchTemplate: # The Launch Template that will be used to deploy the test environment
+  FoldingAtHomeLaunchTemplate:    # The Launch Template that will be used to deploy the test environment
     Type: AWS::EC2::LaunchTemplate
     DependsOn: SecurityGroupFoldingAtHomeEC2
     # DependedOn: None
@@ -174,7 +175,7 @@ Resources:
             ansible-playbook -i inventory main.yml
 
 
-  FoldingAtHomeSpotFleet: # The Spot Fleet definition that will launch the EC2 instances
+  FoldingAtHomeSpotFleet:    # The Spot Fleet definition that will launch the EC2 instances
     Type: AWS::EC2::SpotFleet
     DependsOn: FoldingAtHomeLaunchTemplate
     Properties:
@@ -182,7 +183,7 @@ Resources:
         AllocationStrategy: lowestPrice
         IamFleetRole: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-ec2-spot-fleet-tagging-role
         LaunchTemplateConfigs:
-        - LaunchTemplateSpecification: 
+        - LaunchTemplateSpecification:
             LaunchTemplateName: FoldingAtHomeLaunchTemplate
             Version: !GetAtt FoldingAtHomeLaunchTemplate.LatestVersionNumber
           Overrides:
