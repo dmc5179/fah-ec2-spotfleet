@@ -83,7 +83,7 @@ Parameters:
     Description: Instance type of the GPU EC2 Instances
     Type: String
   FAHGitRepo:
-    Default: 'https://github.com/ajacocks/fah.git'
+    Default: 'https://github.com/dmc5179/fah.git'
     Description: Git repository for installing the Folding At Home Client
     Type: String
 
