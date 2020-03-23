@@ -67,7 +67,7 @@ Parameters:
     Description: FAH User PassKey
     Type: String
   FAHTeam:
-    Default: 0
+    Default: 11812   # RedHat
     Description: FAH Team Number
     Type: String
   TargetCapacity:
