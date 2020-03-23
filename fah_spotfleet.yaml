@@ -216,6 +216,7 @@ Resources:
       SpotFleetRequestConfigData:
         AllocationStrategy: lowestPrice
         IamFleetRole: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-ec2-spot-fleet-tagging-role
+        SpotPrice: '1000'
         LaunchTemplateConfigs:
         - LaunchTemplateSpecification:
             LaunchTemplateName: FoldingAtHomeLaunchTemplate
